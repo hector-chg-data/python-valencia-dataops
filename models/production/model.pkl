@@ -1,0 +1,6 @@
+PLACEHOLDER FILE
+
+This repo intentionally starts without a valid production model.
+Create one by calling POST /retrain (or by running `src.train.train_and_promote`).
+
+This file will be overwritten by `joblib.dump(...)`.
