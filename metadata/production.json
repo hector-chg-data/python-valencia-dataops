@@ -1,1 +1,9 @@
-{}
+{
+  "data_dvc_md5": "ff97bcec241132eaae7ba195835c2439",
+  "git_commit": "b2f68f00dbdcfa053cc4bad7f9175599bd16bbf1",
+  "model_path": "models/production/model.pkl",
+  "promoted_at_utc": "2026-01-26T19:41:16+00:00",
+  "run_id": "f94e5823a8794632bf9098c7511699ee",
+  "trainer": "alice",
+  "y_value": 1.5
+}
