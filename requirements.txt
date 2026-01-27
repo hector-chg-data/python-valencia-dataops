@@ -3,4 +3,10 @@ uvicorn[standard]
 mlflow
 joblib
 pyyaml
-dvc
+dvc[s3]
+streamlit
+requests
+pandas
+psycopg2-binary
+boto3
+gunicorn

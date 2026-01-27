@@ -69,10 +69,13 @@ def _startup() -> None:
 
 class RetrainRequest(BaseModel):
     trainer: str = Field(..., min_length=1, max_length=200)
+    model_type: str = Field("constant")
+    y_value: float = Field(1.5)
 
 
 class PredictRequest(BaseModel):
-    height_cm: float = Field(..., ge=30, le=300)
+    # The training code interprets and normalizes units; the value is ignored by constant/mean models.
+    height_cm: float = Field(..., ge=0.0)
 
 
 @app.get("/health")
@@ -86,7 +89,11 @@ def health() -> dict[str, Any]:
 @app.post("/retrain")
 def retrain(req: RetrainRequest) -> dict[str, Any]:
     try:
-        production = train_and_promote(trainer=req.trainer, y_value=1.5)
+        production = train_and_promote(
+            trainer=req.trainer,
+            model_type=req.model_type or "constant",
+            y_value=req.y_value,
+        )
     except ValueError as e:
         raise HTTPException(status_code=422, detail=str(e)) from e
     except Exception as e:
@@ -96,7 +103,10 @@ def retrain(req: RetrainRequest) -> dict[str, Any]:
 
     with _state_lock:
         if _model is None:
-            raise HTTPException(status_code=503, detail=_model_load_error or "Model not available after retrain.")
+            raise HTTPException(
+                status_code=503,
+                detail=_model_load_error or "Model not available after retrain.",
+            )
         meta = dict(_production_meta) if _production_meta else dict(production)
 
     return {"ok": True, "production": meta}
@@ -116,6 +126,7 @@ def predict(req: PredictRequest) -> dict[str, Any]:
             or "No production model available yet. Call POST /retrain first to create and promote a model.",
         )
 
+    # The constant and mean models both ignore the input, but we keep the API stable.
     y = float(model_obj.predict_one(req.height_cm))
     return {"y": y, "model": meta}
 

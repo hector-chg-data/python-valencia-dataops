@@ -1,0 +1,17 @@
+[core]
+    remote = minio-docker
+
+['remote "minio-docker"']
+    url = s3://dvc
+    endpointurl = http://minio:9000
+    access_key_id = minio
+    secret_access_key = minio12345
+    use_ssl = false
+
+['remote "minio-host"']
+    url = s3://dvc
+    endpointurl = http://localhost:9000
+    access_key_id = minio
+    secret_access_key = minio12345
+    use_ssl = false
+

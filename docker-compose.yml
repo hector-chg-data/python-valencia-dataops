@@ -1,3 +1,5 @@
+version: "3.9"
+
 services:
   postgres:
     image: postgres:18
@@ -5,8 +7,9 @@ services:
       POSTGRES_USER: mlflow
       POSTGRES_PASSWORD: mlflow
       POSTGRES_DB: mlflow
+      PGDATA: /var/lib/postgresql/18/docker
     volumes:
-      - pgdata:/var/lib/postgresql/data
+      - pgdata:/var/lib/postgresql
     ports:
       - "5436:5432"
 
@@ -22,11 +25,23 @@ services:
       - "9000:9000"
       - "9001:9001"
 
+  minio_init:
+    image: minio/mc
+    depends_on:
+      - minio
+    entrypoint: >
+      /bin/sh -c "
+      mc alias set local http://minio:9000 minio minio12345 &&
+      mc mb -p local/mlflow || true &&
+      mc mb -p local/dvc || true
+      "
+
   mlflow:
     image: ghcr.io/mlflow/mlflow:v2.15.1
     depends_on:
       - postgres
       - minio
+      - minio_init
     environment:
       MLFLOW_S3_ENDPOINT_URL: http://minio:9000
       AWS_ACCESS_KEY_ID: minio
@@ -35,7 +50,7 @@ services:
       mlflow server
       --host 0.0.0.0
       --port 5000
-      --backend-store-uri postgresql://mlflow:mlflow@postgres:5436/mlflow
+      --backend-store-uri postgresql://mlflow:mlflow@postgres:5432/mlflow
       --default-artifact-root s3://mlflow/
     ports:
       - "5000:5000"
@@ -49,6 +64,9 @@ services:
       MLFLOW_S3_ENDPOINT_URL: http://minio:9000
       AWS_ACCESS_KEY_ID: minio
       AWS_SECRET_ACCESS_KEY: minio12345
+    working_dir: /workspace
+    volumes:
+      - .:/workspace
     ports:
       - "8000:8000"
     command: >
@@ -56,3 +74,23 @@ services:
       -k uvicorn.workers.UvicornWorker
       -b 0.0.0.0:8000
       -w 2
+
+  ui:
+    build: .
+    depends_on:
+      - api
+    environment:
+      API_BASE: http://api:8000
+    working_dir: /workspace
+    volumes:
+      - .:/workspace
+    ports:
+      - "8501:8501"
+    command: >
+      streamlit run ui/streamlit_app.py
+      --server.address 0.0.0.0
+      --server.port 8501
+
+volumes:
+  pgdata:
+  miniodata:
