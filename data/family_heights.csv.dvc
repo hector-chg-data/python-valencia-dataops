@@ -1,5 +1,5 @@
 outs:
-- md5: 779f125172e7fe180901651d84638f84
-  size: 172
+- md5: ee53f50a0e5ba555a3f8dc10e2a4f4ce
+  size: 169
   hash: md5
   path: family_heights.csv
